@@ -36,10 +36,57 @@ labs(title = "Distribution of Thoughtfulness Ratings by Modality")
 #Question 3
 library(tibble)
 library(brms)
+library(ggplot2)
 
-student_data <- tibble( student_id = 1:20,
+student_data <- tibble(
+student_id = 1:20,
 marks = c(72, 68, 44, 73, 63, 56, 80, 43, 65, 75, 15, 58, 84, 70, 78, 55, 62, 67, 48, 82))
-priors <- c(prior(normal(), class = "Intercept"), prior(exponential(), class = "sigma"))
+
+priors <- c(
+prior(normal(0,1), class = "Intercept"),
+prior(exponential(1), class = "sigma"))
+
 model <- brm(marks ~ student_id, data = student_data, prior = priors)
 summary(model)
+
+alpha <- 2
+beta <- 2
+
+prior_predictions <- rbeta(1000, alpha, beta)
+
+prior_data <- data.frame(
+x = seq(0, 1, length.out = 100), 
+y = apply(matrix(rbeta(100 * 1000, alpha, beta), nrow = 100), 1, mean),
+ymin = apply(matrix(rbeta(100 * 1000, alpha, beta), nrow = 100), 1, quantile, probs = 0.025),
+ymax = apply(matrix(rbeta(100 * 1000, alpha, beta), nrow = 100), 1, quantile, probs = 0.975))
+
+#prior Prediction Plot
+prior_plot <- ggplot(prior_data, aes(x = x, y = y)) +
+geom_ribbon(aes(ymin = ymin, ymax = ymax), fill = "lightblue", alpha = 0.5) +
+stat_smooth(method = "lm", formula = y ~ x, se = FALSE, color = "blue") +
+labs(title = "Prior Predictions with stat_smooth and ribbon", x = "x", y = "Prediction") +
+theme_minimal()
+
+posterior_predictions <- posterior_predict(model, draws = 1000)
+
+posterior_means <- apply(posterior_predictions, 2, mean)
+posterior_quantiles <- apply(posterior_predictions, 2, quantile, probs = c(0.025, 0.975))
+
+posterior_data <- data.frame(
+x = student_data$student_id, 
+y = posterior_means,
+ymin = posterior_quantiles[1, ],
+ymax = posterior_quantiles[2, ])
+
+# Posterior prediction plot
+posterior_plot <- ggplot(posterior_data, aes(x = x, y = y)) +
+geom_line(color = "blue", size = 1) +
+stat_smooth(aes(ymin = ymin, ymax = ymax), fill = "lightblue", alpha = 0.5) +
+labs(title = "Posterior Predictions", x = "Student ID", y = "Prediction") +
+theme_minimal()
+
+print(prior_plot)
+print(posterior_plot)
+
+
 
