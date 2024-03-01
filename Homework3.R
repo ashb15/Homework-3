@@ -34,6 +34,11 @@ labs(title = "Distribution of Thoughtfulness Ratings by Modality")
 #these findings do contradict our previous conclusion that audio recommendations were more likely to be followed up.
 
 #Question 3
+#the beta ditribution takes two parameter: alpha and beta.
+#These parameters represent the shape of the distribution and control its behavior.
+#beta distribution is defined between the range of 0 and 1.
+#the depenednt variable would have to be transfomes to fit within the above range (between 0 and 1).
+
 library(tibble)
 library(brms)
 library(ggplot2)
